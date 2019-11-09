@@ -13,8 +13,10 @@ import RPi.GPIO as gpio
 from pinaps.piNapsController import PiNapsController
 from pinaps.blinoParser import BlinoParser
 
-##Control Parameters defined##
 CTRL_LFO_PITCH = 26
+MIDI_MESSAGE_PERIOD = 1
+
+clock = pygame.time.Clock()
 
 print(mido.get_output_names())
 
@@ -25,7 +27,6 @@ pinapsController = PiNapsController()
 pinapsController.defaultInitialise()
 blinoParser = BlinoParser()
 
-i = 0
 vibratoStrength = 0
 while True:
         while(pinapsController.dataWaiting()):
@@ -43,3 +44,7 @@ while True:
 
         msgModulate = mido.Message('control_change', control=CTRL_LFO_PITCH, value=vibratoStrength)
         port.send(msgModulate)
+
+        #sleep or tick?#
+        time.sleep(MIDI_MESSAGE_PERIOD)
+        #clock.tick(MIDI_MESSAGE_PERIOD)
