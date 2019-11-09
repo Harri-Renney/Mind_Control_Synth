@@ -13,6 +13,7 @@ import RPi.GPIO as gpio
 from pinaps.piNapsController import PiNapsController
 from pinaps.blinoParser import BlinoParser
 
+##Control Parameters defined##
 CTRL_LFO_PITCH = 26
 
 print(mido.get_output_names())
