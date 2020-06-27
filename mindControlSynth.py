@@ -1,19 +1,12 @@
 import time
-
-import pysynth as ps
-import pyaudio  
-import wave
-
-import pygame
-
 import mido
-
-import RPi.GPIO as gpio
 
 from pinaps.piNapsController import PiNapsController
 from NeuroParser import NeuroParser
 
-#Second-order differential equation of motion#
+"""
+	Equation of motion used to modify virbato.
+"""
 def positionStep(pos, vel, acc):
     return pos + vel * 2 + (1/2) * acc * 4
 
@@ -27,8 +20,8 @@ MIDI_MESSAGE_PERIOD = 1
 
 VibratoPos = 0
 vibratoVel = 0
-vibratoAcc = 4  #Replace with acceleration modifier to effect the EEG attention value.
-def printCallback(packet):
+vibratoAcc = 4
+def parserUpdateVibrato(packet):
     global VibratoPos
     global vibratoVel
     global vibratoAcc
@@ -50,13 +43,8 @@ def printCallback(packet):
             VibratoPos = 100 if VibratoPos > 100 else VibratoPos
             VibratoPos = 0 if VibratoPos < 0 else VibratoPos
         
-
-pinapsController = PiNapsController()
-
 def main():
     #Init interface.
-    clock = pygame.time.Clock()
-
     print(mido.get_output_names())
 
     port = mido.open_output('USB Midi:USB Midi MIDI 1 20:0')
@@ -64,8 +52,8 @@ def main():
     port.send(msgModulate)
 
     #Init Pinaps.
+    pinapsController = PiNapsController()
     pinapsController.defaultInitialise()
-    pinapsController.setFullMode()
 
     pinapsController.deactivateAllLEDs()
 
@@ -73,7 +61,7 @@ def main():
 
     while True:
         data = pinapsController.readEEGSensor()
-        aParser.parse(data, printCallback)
+        aParser.parse(data, parserUpdateVibrato)
 
         print("Message vibrato strength: ", VibratoPos)
         msgModulate = mido.Message('control_change', control=CTRL_LFO_RATE, value=VibratoPos)
