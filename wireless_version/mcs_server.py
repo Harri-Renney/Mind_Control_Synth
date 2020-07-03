@@ -1,4 +1,5 @@
 import time
+import bluetooth
 
 from pinaps.piNapsController import PiNapsController
 from NeuroParser import NeuroParser
@@ -41,6 +42,8 @@ def parserUpdateVibrato(packet):
             vibratoVel = velocityStep(vibratoVel, -vibratoAcc)
             VibratoPos = 100 if VibratoPos > 100 else VibratoPos
             VibratoPos = 0 if VibratoPos < 0 else VibratoPos
+
+        VibratoPos = packet.attention
         
 def main():
     #Init Pinaps.
@@ -51,12 +54,33 @@ def main():
 
     aParser = NeuroParser()
 
+    #Setup bluetooth
+    server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+    server_sock.bind(("", bluetooth.PORT_ANY))
+    server_sock.listen(1)
+
+    port = server_sock.getsockname()[1]
+
+    uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+
+    bluetooth.advertise_service(server_sock, "SampleServer", service_id=uuid,
+                                service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
+                                profiles=[bluetooth.SERIAL_PORT_PROFILE],
+                                # protocols=[bluetooth.OBEX_UUID]
+                                )
+
+    print("Waiting for connection on RFCOMM channel", port)
+
+    client_sock, client_info = server_sock.accept()
+    print("Accepted connection from", client_info)
+
     while True:
         data = pinapsController.readEEGSensor()
         aParser.parse(data, parserUpdateVibrato)
 
         print("Message vibrato strength: ", VibratoPos)
         #SEND OVER BLUETOOTH VIBRATO.
+        client_sock.send(str(VibratoPos))
 
         #sleep or tick?#
         time.sleep(MIDI_MESSAGE_PERIOD)
