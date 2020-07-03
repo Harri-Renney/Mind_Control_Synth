@@ -1,5 +1,6 @@
 import time
 import mido
+from bluepy.btle import Scanner, DefaultDelegate
 
 from pinaps.piNapsController import PiNapsController
 from NeuroParser import NeuroParser
@@ -44,6 +45,8 @@ def parserUpdateVibrato(packet):
             VibratoPos = 0 if VibratoPos < 0 else VibratoPos
         
 def main():
+    peripheral = btle.Peripheral(btle.ADDR_TYPE_RANDOM)
+
     #Init interface.
     print(mido.get_output_names())
 
