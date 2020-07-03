@@ -1,5 +1,4 @@
 import time
-import mido
 
 from pinaps.piNapsController import PiNapsController
 from NeuroParser import NeuroParser
@@ -44,13 +43,6 @@ def parserUpdateVibrato(packet):
             VibratoPos = 0 if VibratoPos < 0 else VibratoPos
         
 def main():
-    #Init interface.
-    print(mido.get_output_names())
-
-    port = mido.open_output('USB Midi:USB Midi MIDI 1 20:0')
-    msgModulate = mido.Message('control_change', control=CTRL_LFO_PITCH, value=100)
-    port.send(msgModulate)
-
     #Init Pinaps.
     pinapsController = PiNapsController()
     pinapsController.defaultInitialise()
@@ -64,8 +56,7 @@ def main():
         aParser.parse(data, parserUpdateVibrato)
 
         print("Message vibrato strength: ", VibratoPos)
-        msgModulate = mido.Message('control_change', control=CTRL_LFO_RATE, value=VibratoPos)
-        port.send(msgModulate)
+        #SEND OVER BLUETOOTH VIBRATO.
 
         #sleep or tick?#
         time.sleep(MIDI_MESSAGE_PERIOD)
