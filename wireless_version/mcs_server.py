@@ -13,9 +13,6 @@ def positionStep(pos, vel, acc):
 def velocityStep(vel, acc):
     return acc * 2 + vel
 
-CTRL_LFO_PITCH = 26
-CTRL_LFO_RATE = 29
-
 MIDI_MESSAGE_PERIOD = 1
 
 VibratoPos = 0
@@ -55,15 +52,15 @@ def main():
     aParser = NeuroParser()
 
     #Setup bluetooth
-    server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    server_sock.bind(("", bluetooth.PORT_ANY))
-    server_sock.listen(1)
+    msc_server_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+    msc_server_socket.bind(("", bluetooth.PORT_ANY))
+    msc_server_socket.listen(1)
 
-    port = server_sock.getsockname()[1]
+    port = msc_server_socket.getsockname()[1]
 
-    uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+    uuid = "94f39d29-7d6d-437d-973b-fba39e22d4ee"
 
-    bluetooth.advertise_service(server_sock, "SampleServer", service_id=uuid,
+    bluetooth.advertise_service(msc_server_socket, "SampleServer", service_id=uuid,
                                 service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
                                 profiles=[bluetooth.SERIAL_PORT_PROFILE],
                                 # protocols=[bluetooth.OBEX_UUID]
@@ -71,20 +68,20 @@ def main():
 
     print("Waiting for connection on RFCOMM channel", port)
 
-    client_sock, client_info = server_sock.accept()
+    msc_client_socket, client_info = msc_server_socket.accept()
     print("Accepted connection from", client_info)
 
     while True:
+        #Parse EEG data and calulate vibrato variables in callback 'parserUpdateVibrato'.
         data = pinapsController.readEEGSensor()
         aParser.parse(data, parserUpdateVibrato)
 
-        print("Message vibrato strength: ", VibratoPos)
-        #SEND OVER BLUETOOTH VIBRATO.
-        client_sock.send(str(VibratoPos))
+        #Send calculated vibrato position to msc_client.
+        msc_client_socket.send(str(VibratoPos))
+        print("Message vibrato strength: ", VibratoPos)     #@Debug - Print vibrato strength.
 
-        #sleep or tick?#
+        #Sleep for designated time period.
         time.sleep(MIDI_MESSAGE_PERIOD)
-        #clock.tick(MIDI_MESSAGE_PERIOD)
 
 if __name__ == '__main__':
     main()

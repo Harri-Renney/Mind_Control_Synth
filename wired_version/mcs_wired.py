@@ -18,11 +18,11 @@ CTRL_LFO_RATE = 29
 
 MIDI_MESSAGE_PERIOD = 1
 
-VibratoPos = 0
+vibratoPos = 0
 vibratoVel = 0
 vibratoAcc = 4
 def parserUpdateVibrato(packet):
-    global VibratoPos
+    global vibratoPos
     global vibratoVel
     global vibratoAcc
     if(packet.code == NeuroParser.DataPacket.kPoorQuality):
@@ -33,20 +33,19 @@ def parserUpdateVibrato(packet):
         ##Change in vibratoStrength depending on meditation values##
         ##@ToDo - Change to include more momentum build up etc##
         if(packet.attention > 50):
-            VibratoPos = positionStep(VibratoPos, vibratoVel, vibratoAcc)
+            vibratoPos = positionStep(vibratoPos, vibratoVel, vibratoAcc)
             vibratoVel = velocityStep(vibratoVel, vibratoAcc)
-            VibratoPos = 100 if VibratoPos > 100 else VibratoPos
-            VibratoPos = 0 if VibratoPos < 0 else VibratoPos
+            vibratoPos = 100 if vibratoPos > 100 else vibratoPos
+            vibratoPos = 0 if vibratoPos < 0 else vibratoPos
         else:
-            VibratoPos = positionStep(VibratoPos, vibratoVel, -vibratoAcc)
+            vibratoPos = positionStep(vibratoPos, vibratoVel, -vibratoAcc)
             vibratoVel = velocityStep(vibratoVel, -vibratoAcc)
-            VibratoPos = 100 if VibratoPos > 100 else VibratoPos
-            VibratoPos = 0 if VibratoPos < 0 else VibratoPos
+            vibratoPos = 100 if vibratoPos > 100 else vibratoPos
+            vibratoPos = 0 if vibratoPos < 0 else vibratoPos
         
 def main():
-    #Init interface.
-    print(mido.get_output_names())
-
+    #Init USB:MIDI interface.
+    #print(mido.get_output_names())                                                     #Used to originally find correct serial port.
     port = mido.open_output('USB Midi:USB Midi MIDI 1 20:0')
     msgModulate = mido.Message('control_change', control=CTRL_LFO_PITCH, value=100)
     port.send(msgModulate)
@@ -54,22 +53,21 @@ def main():
     #Init Pinaps.
     pinapsController = PiNapsController()
     pinapsController.defaultInitialise()
-
     pinapsController.deactivateAllLEDs()
 
     aParser = NeuroParser()
 
+    #Parse all available Pinaps EEG data. Calculate vibrato value and send as MIDI message.
     while True:
         data = pinapsController.readEEGSensor()
         aParser.parse(data, parserUpdateVibrato)
 
-        print("Message vibrato strength: ", VibratoPos)
-        msgModulate = mido.Message('control_change', control=CTRL_LFO_RATE, value=VibratoPos)
+        print("Message vibrato strength: ", vibratoPos)
+        msgModulate = mido.Message('control_change', control=CTRL_LFO_RATE, value=vibratoPos)
         port.send(msgModulate)
 
-        #sleep or tick?#
+        #Sleep for defined message period.
         time.sleep(MIDI_MESSAGE_PERIOD)
-        #clock.tick(MIDI_MESSAGE_PERIOD)
 
 if __name__ == '__main__':
     main()
