@@ -1,11 +1,5 @@
 import time
 
-import pysynth as ps
-import pyaudio  
-import wave
-
-import pygame
-
 import mido
 
 import RPi.GPIO as gpio
@@ -24,8 +18,6 @@ CTRL_LFO_PITCH = 26
 CTRL_LFO_RATE = 29
 
 MIDI_MESSAGE_PERIOD = 1
-
-clock = pygame.time.Clock()
 
 print(mido.get_output_names())
 
